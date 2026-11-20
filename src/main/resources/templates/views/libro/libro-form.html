@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head ('Bookinder - Libro')"></head>
+
+<body class="d-flex flex-column h-100">
+
+<!-- Insertar el fragmento del header -->
+<header th:replace="fragments/header :: header"></header>
+
+<!-- Contenido dinámico -->
+<main class="form-page">
+    <div class="form-card">
+
+        <!-- Título dinámico (alta / edición) -->
+        <h1 th:text="${libro.id} == null ? #{msg.libro-form.add} : #{msg.libro-form.edit}"></h1>
+
+        <!-- Mensaje de error global -->
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <!-- Paso 1: portada actual del libro (si no tiene, imagen por defecto) -->
+        <div class="text-center mb-3">
+            <img th:src="${libro.urlPortada != null and !#strings.isEmpty(libro.urlPortada)}
+                         ? @{${libro.urlPortada}} : @{/images/logo.svg}"
+                 alt="Portada" class="img-thumbnail rounded" style="max-width: 150px;">
+        </div>
+
+        <!-- Formulario: si no hay id es un alta, si hay id es una edición -->
+        <!-- Paso 2: cualquier formulario con subida de ficheros necesita enctype="multipart/form-data" -->
+        <form th:action="${libro.id} == null ? @{/libros/insert} : @{/libros/update}"
+              th:object="${libro}" method="post" enctype="multipart/form-data" class="mt-3">
+
+            <input type="hidden" th:field="*{id}"/>
+            <input type="hidden" th:field="*{urlPortada}"/>
+
+            <!-- ISBN -->
+            <div class="mb-3">
+                <label for="isbn" class="form-label" th:text="#{msg.libro-form.isbn}"></label>
+                <input type="text" id="isbn" th:field="*{isbn}" class="form-control" maxlength="20" placeholder="978-84-0000-000-0"/>
+                <div th:if="${#fields.hasErrors('isbn')}" class="text-danger" th:errors="*{isbn}"></div>
+            </div>
+
+            <!-- Título -->
+            <div class="mb-3">
+                <label for="titulo" class="form-label" th:text="#{msg.libro-form.titulo}"></label>
+                <input type="text" id="titulo" th:field="*{titulo}" class="form-control" maxlength="255"/>
+                <div th:if="${#fields.hasErrors('titulo')}" class="text-danger" th:errors="*{titulo}"></div>
+            </div>
+
+            <!-- Autor -->
+            <div class="mb-3">
+                <label for="autor" class="form-label" th:text="#{msg.libro-form.autor}"></label>
+                <input type="text" id="autor" th:field="*{autor}" class="form-control" maxlength="150"/>
+                <div th:if="${#fields.hasErrors('autor')}" class="text-danger" th:errors="*{autor}"></div>
+            </div>
+
+            <!-- Editorial (opcional) -->
+            <div class="mb-3">
+                <label for="editorial" class="form-label" th:text="#{msg.libro-form.editorial}"></label>
+                <input type="text" id="editorial" th:field="*{editorial}" class="form-control" maxlength="150"/>
+                <div th:if="${#fields.hasErrors('editorial')}" class="text-danger" th:errors="*{editorial}"></div>
+            </div>
+
+            <!-- Año de publicación (opcional) -->
+            <div class="mb-3">
+                <label for="anioPublicacion" class="form-label" th:text="#{msg.libro-form.anioPublicacion}"></label>
+                <input type="number" id="anioPublicacion" th:field="*{anioPublicacion}" class="form-control" min="0"/>
+                <div th:if="${#fields.hasErrors('anioPublicacion')}" class="text-danger" th:errors="*{anioPublicacion}"></div>
+            </div>
+
+            <!-- Sinopsis (opcional) -->
+            <div class="mb-3">
+                <label for="sinopsis" class="form-label" th:text="#{msg.libro-form.sinopsis}"></label>
+                <textarea id="sinopsis" th:field="*{sinopsis}" class="form-control" rows="3" maxlength="1000"></textarea>
+                <div th:if="${#fields.hasErrors('sinopsis')}" class="text-danger" th:errors="*{sinopsis}"></div>
+            </div>
+
+            <!-- Portada actual (ruta guardada) -->
+            <div class="mb-3">
+                <label for="urlPortadaRO" class="form-label" th:text="#{msg.libro-form.urlPortada}"></label>
+                <input type="text" id="urlPortadaRO" class="form-control" th:value="*{urlPortada}"
+                       th:placeholder="#{msg.libro-form.urlPortada.placeholder}" disabled>
+            </div>
+
+            <!-- Paso 3: subida de una nueva portada (campo independiente portadaFile) -->
+            <div class="mb-3">
+                <label for="portadaFile" class="form-label" th:text="#{msg.libro-form.portadaUpload}"></label>
+                <input type="file" id="portadaFile" name="portadaFile" class="form-control" accept="image/*">
+                <div class="form-text" th:text="#{msg.libro-form.portadaUpload.help}"></div>
+            </div>
+
+            <!-- Categoría (select). En edición aparece seleccionada la categoría actual del libro -->
+            <div class="mb-3">
+                <label for="categoriaId" class="form-label" th:text="#{msg.libro-form.categoria}"></label>
+                <select id="categoriaId" class="form-select" th:field="*{categoriaId}">
+                    <!-- Opción vacía -->
+                    <option value="" th:text="#{msg.libro-form.categoria.select}"></option>
+
+                    <!-- Una opción por cada categoría -->
+                    <option th:each="cat : ${listaCategorias}" th:value="${cat.id}" th:text="${cat.nombre}"></option>
+                </select>
+                <div th:if="${#fields.hasErrors('categoriaId')}" class="text-danger" th:errors="*{categoriaId}"></div>
+            </div>
+
+            <!-- Botón submit dinámico -->
+            <button type="submit" class="btn btn-primary"
+                    th:text="${libro.id} == null ? #{msg.libro-form.create} : #{msg.libro-form.update}"></button>
+
+            <!-- Volver al listado -->
+            <a th:href="@{/libros}" class="btn btn-secondary" th:text="#{msg.libro-form.returnback}"></a>
+        </form>
+
+    </div>
+</main>
+
+<!-- Insertar el fragmento del footer -->
+<footer th:replace="fragments/footer :: footer"></footer>
+
+<div th:replace="fragments/scripts :: scripts"></div>
+
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head ('Bookinder - Libros')"></head>
+
+<body class="d-flex flex-column h-100">
+
+<!-- Insertar el fragmento del header -->
+<header th:replace="fragments/header :: header"></header>
+
+<!-- Contenido dinámico -->
+<main class="list-page">
+    <!-- sortField y sortDir se sacan de sortParam ("campo,asc|desc") que envía el controller -->
+    <div class="list-card"
+         th:with="sortField=${sortParam != null ? #strings.substringBefore(sortParam, ',') : 'titulo'},
+                  sortDir=${sortParam != null ? #strings.substringAfter(sortParam, ',') : 'asc'}">
+
+        <!-- Título listado -->
+        <h1 th:text="#{msg.libro-list.title}"></h1>
+
+        <!-- Botón para añadir nuevo libro -->
+        <a th:href="@{/libros/new}" class="btn btn-success" th:text="#{msg.libro-list.add}"></a>
+
+        <!-- Mensaje de error -->
+        <div th:if="${errorMessage}" class="alert alert-danger mt-3" th:text="${errorMessage}"></div>
+
+        <!-- Tabla de libros -->
+        <table class="table table-bordered table-striped mt-3" th:if="${page != null}">
+            <thead>
+            <tr>
+                <th>
+                    <a class="text-decoration-none"
+                       th:href="@{/libros(page=${page.number}, size=${page.size},
+                                     sort=${(sortField == 'id' and sortDir == 'asc') ? 'id,desc' : 'id,asc'})}">
+                        <span th:text="#{msg.libro-list.id}"></span>
+                        <span class="ms-1" th:if="${sortField == 'id'}"
+                              th:text="${sortDir == 'asc'} ? '▲' : '▼'"></span>
+                    </a>
+                </th>
+                <th>
+                    <a class="text-decoration-none"
+                       th:href="@{/libros(page=${page.number}, size=${page.size},
+                                     sort=${(sortField == 'isbn' and sortDir == 'asc') ? 'isbn,desc' : 'isbn,asc'})}">
+                        <span th:text="#{msg.libro-list.isbn}"></span>
+                        <span class="ms-1" th:if="${sortField == 'isbn'}"
+                              th:text="${sortDir == 'asc'} ? '▲' : '▼'"></span>
+                    </a>
+                </th>
+                <th>
+                    <a class="text-decoration-none"
+                       th:href="@{/libros(page=${page.number}, size=${page.size},
+                                     sort=${(sortField == 'titulo' and sortDir == 'asc') ? 'titulo,desc' : 'titulo,asc'})}">
+                        <span th:text="#{msg.libro-list.titulo}"></span>
+                        <span class="ms-1" th:if="${sortField == 'titulo'}"
+                              th:text="${sortDir == 'asc'} ? '▲' : '▼'"></span>
+                    </a>
+                </th>
+                <th>
+                    <a class="text-decoration-none"
+                       th:href="@{/libros(page=${page.number}, size=${page.size},
+                                     sort=${(sortField == 'autor' and sortDir == 'asc') ? 'autor,desc' : 'autor,asc'})}">
+                        <span th:text="#{msg.libro-list.autor}"></span>
+                        <span class="ms-1" th:if="${sortField == 'autor'}"
+                              th:text="${sortDir == 'asc'} ? '▲' : '▼'"></span>
+                    </a>
+                </th>
+                <!-- Categoría (categoria.nombre) -->
+                <th>
+                    <a class="text-decoration-none"
+                       th:href="@{/libros(page=${page.number}, size=${page.size},
+                                     sort=${(sortField == 'categoria.nombre' and sortDir == 'asc') ? 'categoria.nombre,desc' : 'categoria.nombre,asc'})}">
+                        <span th:text="#{msg.libro-list.categoria}"></span>
+                        <span class="ms-1" th:if="${sortField == 'categoria.nombre'}"
+                              th:text="${sortDir == 'asc'} ? '▲' : '▼'"></span>
+                    </a>
+                </th>
+                <th th:text="#{msg.libro-list.actions}"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="libro : ${page.content}">
+                <td th:text="${libro.id}"></td>
+                <td th:text="${libro.isbn}"></td>
+                <td th:text="${libro.titulo}"></td>
+                <td th:text="${libro.autor}"></td>
+                <!-- Nombre de la categoría del libro -->
+                <td th:text="${libro.categoriaNombre}"></td>
+                <td>
+                    <!-- Ver detalle -->
+                    <a th:href="@{/libros/detail(id=${libro.id})}"
+                       class="btn btn-outline-secondary btn-sm me-1"
+                       th:text="#{msg.libro-list.viewDetail}"></a>
+
+                    <!-- Editar -->
+                    <a th:href="@{/libros/edit(id=${libro.id})}"
+                       class="btn btn-primary btn-sm"
+                       th:text="#{msg.libro-list.edit}"></a>
+
+                    <!-- Eliminar -->
+                    <form th:action="@{/libros/delete}" method="post" class="d-inline">
+                        <input type="hidden" name="id" th:value="${libro.id}"/>
+                        <button type="submit"
+                                class="btn btn-danger btn-sm"
+                                th:text="#{msg.libro-list.delete}"
+                                th:onclick="|return confirm('#{msg.libro-list.confirm}');|"></button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Paginación -->
+        <div class="d-flex justify-content-between align-items-center mt-3"
+             th:if="${page != null and page.totalPages > 0}">
+
+            <!-- Info de página: "Página X de Y (N registros en total)" -->
+            <div>
+                <span th:text="#{msg.pagination.info(${page.number} + 1, ${page.totalPages}, ${page.totalElements})}"></span>
+            </div>
+
+            <!-- Controles de paginación -->
+            <nav th:aria-label="#{msg.pagination.aria.label}">
+                <ul class="pagination mb-0">
+
+                    <!-- Botón Anterior -->
+                    <li class="page-item" th:classappend="${page.first} ? ' disabled'">
+                        <a class="page-link"
+                           th:href="@{/libros(page=${page.number - 1}, size=${page.size}, sort=${sortParam})}"
+                           th:aria-label="#{msg.pagination.prev}">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    <!-- Números de página -->
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                        th:classappend="${i == page.number} ? ' active'">
+                        <a class="page-link"
+                           th:text="${i + 1}"
+                           th:href="@{/libros(page=${i}, size=${page.size}, sort=${sortParam})}"></a>
+                    </li>
+
+                    <!-- Botón Siguiente -->
+                    <li class="page-item" th:classappend="${page.last} ? ' disabled'">
+                        <a class="page-link"
+                           th:href="@{/libros(page=${page.number + 1}, size=${page.size}, sort=${sortParam})}"
+                           th:aria-label="#{msg.pagination.next}">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Volver -->
+        <a th:href="@{/}" class="btn btn-secondary mt-3" th:text="#{msg.libro-list.returnback}"></a>
+
+    </div>
+</main>
+
+<!-- Insertar el fragmento del footer -->
+<footer th:replace="fragments/footer :: footer"></footer>
+
+<div th:replace="fragments/scripts :: scripts"></div>
+
+</body>
+</html>
